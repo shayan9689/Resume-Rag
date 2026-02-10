@@ -24,6 +24,12 @@ RESUME-RAG/
 │   ├── rag.py               # RAG retrieval & generation
 │   ├── prompts.py           # System & user prompts
 │   ├── run.py               # Production server entry point
+│   ├── requirements.txt     # Python dependencies
+│   ├── .env                 # Environment variables (create this)
+│   ├── data/                # Data directory
+│   │   └── Shayan-umair-Resume.pdf
+│   ├── faiss_index          # FAISS vector index (generated)
+│   ├── faiss_index_chunks.pkl  # Chunks pickle file (generated)
 │   └── README.md            # Backend documentation
 ├── frontend/                # Frontend UI (HTML/CSS/JS)
 │   ├── index.html           # Main HTML
@@ -31,10 +37,6 @@ RESUME-RAG/
 │   ├── script.js            # JavaScript logic
 │   ├── config.js            # Frontend configuration
 │   └── README.md            # Frontend documentation
-├── data/                    # Data directory
-│   └── Shayan-umair-Resume.pdf
-├── .env                     # Environment variables (create this)
-├── requirements.txt         # Python dependencies
 ├── README.md                # This file
 └── venv/                    # Virtual environment
 ```
@@ -62,12 +64,12 @@ venv\Scripts\activate
 source venv/bin/activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 ### 3. Configuration
 
-Create a `.env` file in the project root:
+Create a `.env` file in the `backend/` directory:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
@@ -75,9 +77,9 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 ### 4. Place Resume
 
-Place your resume PDF in the `data/` directory:
+Place your resume PDF in the `backend/data/` directory:
 ```
-data/Shayan-umair-Resume.pdf
+backend/data/Shayan-umair-Resume.pdf
 ```
 
 ### 5. Run Backend

@@ -9,9 +9,79 @@ env/
 ENV/
 .venv
 
-# Environment variables
+# Environment variables and secrets
 .env
+.env.*
+*.env
 .env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+**/.env
+**/.env.*
+**/*.env
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+
+# API Keys and secrets (be specific to avoid false positives)
+*secret*.txt
+*secret*.json
+*secret*.yaml
+*secret*.yml
+*secrets*.txt
+*secrets*.json
+*secrets*.yaml
+*secrets*.yml
+*api_key*.txt
+*api_key*.json
+*api_key*.yaml
+*api_key*.yml
+*apikey*.txt
+*apikey*.json
+*apikey*.yaml
+*apikey*.yml
+*password*.txt
+*password*.json
+*password*.yaml
+*password*.yml
+*token*.txt
+*token*.json
+*token*.yaml
+*token*.yml
+*credential*.txt
+*credential*.json
+*credential*.yaml
+*credential*.yml
+*credentials*.txt
+*credentials*.json
+*credentials*.yaml
+*credentials*.yml
+
+# Certificate and key files
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.p8
+*.p7b
+*.p7c
+
+# Configuration files that might contain secrets
+config.local.*
+config.*.local
+secrets.yaml
+secrets.yml
+secrets.json
+credentials.json
+credentials.yaml
+credentials.yml
 
 # IDE
 .vscode/
@@ -20,9 +90,9 @@ ENV/
 *.swo
 *~
 
-# FAISS Index files
-faiss_index
-faiss_index_chunks.pkl
+# FAISS Index files (in backend directory)
+backend/faiss_index
+backend/faiss_index_chunks.pkl
 
 # OS
 .DS_Store
@@ -44,3 +114,4 @@ htmlcov/
 # Frontend (if using build tools)
 node_modules/
 npm-debug.log*
+yarn-error.log*

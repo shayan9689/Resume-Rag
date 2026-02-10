@@ -6,18 +6,19 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from backend directory
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # Project root directory (parent of backend/)
 PROJECT_ROOT = Path(__file__).parent.parent
 
-# Data directory
-DATA_DIR = PROJECT_ROOT / "data"
+# Data directory (stored in backend directory)
+DATA_DIR = Path(__file__).parent / "data"
 RESUME_PATH = DATA_DIR / "Shayan-umair-Resume.pdf"
 
-# FAISS index paths
-FAISS_INDEX_DIR = PROJECT_ROOT
+# FAISS index paths (stored in backend directory)
+FAISS_INDEX_DIR = Path(__file__).parent
 FAISS_INDEX_PATH = FAISS_INDEX_DIR / "faiss_index"
 FAISS_CHUNKS_PATH = FAISS_INDEX_DIR / "faiss_index_chunks.pkl"
 

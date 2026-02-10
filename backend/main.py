@@ -3,14 +3,17 @@ FastAPI entry point for Resume RAG system.
 Provides REST API endpoint for querying resume information.
 """
 
-"""
-FastAPI entry point for Resume RAG system.
-Provides REST API endpoint for querying resume information.
-"""
-
 import os
-from contextlib import asynccontextmanager
+import sys
 from pathlib import Path
+
+# Add parent directory to path to allow imports when running directly
+backend_dir = Path(__file__).parent
+project_root = backend_dir.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from contextlib import asynccontextmanager
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,7 +32,9 @@ from backend.config import (
     TOP_K_CHUNKS,
     API_TITLE,
     API_VERSION,
-    CORS_ORIGINS
+    CORS_ORIGINS,
+    API_HOST,
+    API_PORT
 )
 from backend.loader import ResumeLoader
 from backend.vector_store import VectorStore
@@ -53,7 +58,7 @@ def validate_openai_key() -> str:
     if not OPENAI_API_KEY or OPENAI_API_KEY == "your_openai_api_key_here":
         raise ValueError(
             "OPENAI_API_KEY not found in environment variables. "
-            "Please create a .env file in the project root with your OpenAI API key."
+            "Please create a .env file in the backend directory with your OpenAI API key."
         )
     return OPENAI_API_KEY
 
@@ -82,7 +87,7 @@ def initialize_rag_system():
             
             if not RESUME_PATH.exists():
                 print(f"WARNING: Resume file not found at {RESUME_PATH}")
-                print("Please place your resume PDF file in the data/ directory.")
+                print("Please place your resume PDF file in the backend/data/ directory.")
                 print("The server will start but /ask endpoint will not work until resume is added.")
                 return
             
@@ -223,5 +228,19 @@ async def ask_question(request: QuestionRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    from backend.config import API_HOST, API_PORT
-    uvicorn.run(app, host=API_HOST, port=API_PORT)
+    
+    print("=" * 60)
+    print(f"Starting {API_TITLE} v{API_VERSION}")
+    print(f"Server will run on: http://{API_HOST}:{API_PORT}")
+    print(f"API Documentation: http://{API_HOST}:{API_PORT}/docs")
+    print(f"Frontend should connect to: http://localhost:{API_PORT}")
+    print("=" * 60)
+    print()
+    
+    uvicorn.run(
+        app,
+        host=API_HOST,
+        port=API_PORT,
+        reload=False,
+        log_level="info"
+    )

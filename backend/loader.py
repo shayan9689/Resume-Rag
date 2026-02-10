@@ -46,7 +46,7 @@ class ResumeLoader:
         if not self.resume_path.exists():
             raise FileNotFoundError(
                 f"Resume file not found at {self.resume_path}. "
-                f"Please ensure the resume PDF file is placed in the data/ directory."
+                f"Please ensure the resume PDF file is placed in the backend/data/ directory."
             )
         
         try:

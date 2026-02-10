@@ -13,6 +13,12 @@ backend/
 ├── vector_store.py      # FAISS vector store management
 ├── rag.py               # RAG retrieval and generation
 ├── prompts.py           # System and user prompts
+├── requirements.txt     # Python dependencies
+├── .env                 # Environment variables (create this)
+├── data/                # Data directory
+│   └── Shayan-umair-Resume.pdf
+├── faiss_index          # FAISS vector index (generated)
+├── faiss_index_chunks.pkl  # Chunks pickle file (generated)
 └── README.md           # This file
 ```
 
@@ -20,6 +26,10 @@ backend/
 
 ```bash
 # From project root
+pip install -r backend/requirements.txt
+
+# Or from backend directory
+cd backend
 pip install -r requirements.txt
 ```
 
@@ -56,7 +66,7 @@ Edit `config.py` to modify:
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the `backend/` directory:
 
 ```env
 OPENAI_API_KEY=your_api_key_here
