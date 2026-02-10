@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume RAG - Ask Questions About Resume</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📄 Resume RAG System</h1>
+            <p class="subtitle">Ask questions about the resume using AI-powered retrieval</p>
+        </header>
+
+        <div class="main-content">
+            <div class="question-section">
+                <label for="question-input">Ask a Question:</label>
+                <textarea 
+                    id="question-input" 
+                    placeholder="e.g., What are your key skills? What is your educational background?"
+                    rows="3"
+                ></textarea>
+                <button id="ask-button" onclick="askQuestion()">
+                    <span id="button-text">Ask Question</span>
+                    <span id="loading-spinner" class="spinner hidden"></span>
+                </button>
+            </div>
+
+            <div id="answer-section" class="answer-section hidden">
+                <h2>Answer:</h2>
+                <div id="answer-content" class="answer-content"></div>
+            </div>
+
+            <div id="error-section" class="error-section hidden">
+                <h3>Error:</h3>
+                <p id="error-message"></p>
+            </div>
+
+            <div class="example-questions">
+                <h3>Example Questions:</h3>
+                <div class="example-buttons">
+                    <button class="example-btn" onclick="setQuestion('Hello')">
+                        👋 Greeting
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('Tell me about this resume')">
+                        📄 Overview
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What are your key skills?')">
+                        💼 Key Skills
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What is your educational background?')">
+                        🎓 Education
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What programming languages do you know?')">
+                        💻 Programming
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What work experience do you have?')">
+                        🏢 Experience
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What projects have you worked on?')">
+                        🚀 Projects
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What certifications do you have?')">
+                        🏅 Certifications
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What is your contact information?')">
+                        📧 Contact
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What are your achievements?')">
+                        ⭐ Achievements
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What makes you unique?')">
+                        ✨ Unique Qualities
+                    </button>
+                    <button class="example-btn" onclick="setQuestion('What are your skills and education?')">
+                        🔗 Multiple Topics
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by FastAPI + LangChain + OpenAI</p>
+            <p class="status" id="api-status">Checking API status...</p>
+        </footer>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

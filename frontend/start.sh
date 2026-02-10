@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "Starting Frontend Server..."
+echo ""
+python start_server.py
