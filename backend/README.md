@@ -1,73 +1,54 @@
-# Resume RAG Backend
+# Arabic Docs RAG Backend
 
-FastAPI-based backend for the Resume RAG system.
+FastAPI backend for Arabic document RAG (Arabic/English Q&A over your PDFs).
 
 ## Structure
 
 ```
 backend/
-├── __init__.py          # Package initialization
-├── main.py              # FastAPI application entry point
-├── config.py            # Configuration settings
-├── loader.py            # PDF loading and chunking
-├── vector_store.py      # FAISS vector store management
-├── rag.py               # RAG retrieval and generation
-├── prompts.py           # System and user prompts
-├── requirements.txt     # Python dependencies
-├── .env                 # Environment variables (create this)
-├── data/                # Data directory
-│   └── Shayan-umair-Resume.pdf
-├── faiss_index          # FAISS vector index (generated)
-├── faiss_index_chunks.pkl  # Chunks pickle file (generated)
-└── README.md           # This file
+├── __init__.py
+├── main.py              # FastAPI app
+├── config.py
+├── loader.py            # Multi-PDF loading
+├── vector_store.py      # FAISS index
+├── rag.py               # ArabicRAG
+├── prompts.py
+├── requirements.txt
+├── .env                 # OPENAI_API_KEY
+├── data/                # PDFs (NDS_AR_0.pdf, QNDS3_AR.pdf, etc.)
+├── faiss_index          # (generated)
+├── faiss_index_chunks.pkl
+└── README.md
 ```
 
-## Installation
+## Install
 
 ```bash
-# From project root
 pip install -r backend/requirements.txt
-
-# Or from backend directory
-cd backend
-pip install -r requirements.txt
 ```
 
-## Running the Server
+## Run
 
-### Development Mode
 ```bash
 # From project root
 python -m backend.main
 
-# Or using uvicorn
-uvicorn backend.main:app --reload
+# Or
+cd backend && python main.py
 ```
 
-### Production Mode
-```bash
-uvicorn backend.main:app --host 0.0.0.0 --port 8000
-```
+Or: `uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000`
 
-## API Endpoints
+## Endpoints
 
-- `GET /` - API information
-- `GET /health` - Health check endpoint
-- `POST /ask` - Ask questions about the resume
+- `GET /` – Info
+- `GET /health` – Health
+- `POST /ask` – Ask questions (Arabic or English)
 
-## Configuration
+## Environment
 
-Edit `config.py` to modify:
-- Resume file path
-- FAISS index location
-- OpenAI models
-- Chunking parameters
-- API settings
-
-## Environment Variables
-
-Create a `.env` file in the `backend/` directory:
+Create `backend/.env`:
 
 ```env
-OPENAI_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_key
 ```

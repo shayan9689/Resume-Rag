@@ -1,97 +1,72 @@
 import React from 'react';
 
-const EXAMPLE_QUESTIONS = [
-  { text: 'Hello', label: '👋 Greeting' },
-  { text: 'Tell me about this resume', label: '📄 Overview' },
-  { text: 'What are your key skills?', label: '💼 Key Skills' },
-  { text: 'What is your educational background?', label: '🎓 Education' },
-  { text: 'What programming languages do you know?', label: '💻 Programming' },
-  { text: 'What work experience do you have?', label: '🏢 Experience' },
-  { text: 'What projects have you worked on?', label: '🚀 Projects' },
-  { text: 'What certifications do you have?', label: '🏅 Certifications' },
-  { text: 'What is your contact information?', label: '📧 Contact' },
-  { text: 'What are your achievements?', label: '⭐ Achievements' },
-  { text: 'What makes you unique?', label: '✨ Unique Qualities' },
-  { text: 'What are your skills and education?', label: '🔗 Multiple Topics' },
+const EXAMPLES = [
+  { text: 'Hello', label: 'Greeting' },
+  { text: 'مرحبا', label: 'مرحبا' },
+  { text: 'Tell me about these documents', label: 'Overview' },
+  { text: 'ما هي أبرز أهداف الوثيقة؟', label: 'أهداف' },
+  { text: 'What are the main strategic goals?', label: 'Goals' },
+  { text: 'What indicators are mentioned?', label: 'Indicators' },
+  { text: 'ما هي المؤشرات الرئيسية؟', label: 'مؤشرات' },
+  { text: 'What is the vision or timeline?', label: 'Vision' },
+  { text: 'ما الرؤية والجدول الزمني؟', label: 'رؤية' },
+  { text: 'Key initiatives or pillars?', label: 'Initiatives' },
 ];
 
-const containerStyles = {
-  marginTop: '3rem',
-  paddingTop: '2.5rem',
-  borderTop: '2px solid rgba(255, 255, 255, 0.2)',
-  animation: 'fadeIn 0.8s ease-out',
+const wrap = {
+  marginTop: '2.5rem',
+  paddingTop: '1.5rem',
+  borderTop: '1px solid #c4b8a8',
 };
 
-const titleStyles = {
-  fontSize: '1.2rem',
-  fontWeight: '700',
-  color: '#ffffff',
-  marginBottom: '1.5rem',
-  textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-};
-
-const gridStyles = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-  gap: '1rem',
-};
-
-const buttonBaseStyles = {
-  padding: '1rem 1.25rem',
-  fontSize: '0.95rem',
+const title = {
+  fontSize: '0.75rem',
   fontWeight: '600',
-  color: '#667eea',
-  background: 'rgba(255, 255, 255, 0.95)',
-  backdropFilter: 'blur(10px)',
-  border: '2px solid rgba(102, 126, 234, 0.3)',
-  borderRadius: '12px',
+  color: '#8a7a6a',
+  marginBottom: '0.75rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+};
+
+const list = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '0.5rem',
+};
+
+const pill = {
+  padding: '0.4rem 0.75rem',
+  fontSize: '0.8rem',
+  color: '#8b4513',
+  background: 'transparent',
+  border: '1px solid #c4b8a8',
+  borderRadius: '999px',
   cursor: 'pointer',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  textAlign: 'center',
-  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.2s',
 };
 
-const buttonHoverStyles = {
-  ...buttonBaseStyles,
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  color: '#ffffff',
-  transform: 'translateY(-4px) scale(1.02)',
-  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
-  border: '2px solid transparent',
-};
-
-const buttonActiveStyles = {
-  ...buttonHoverStyles,
-  transform: 'translateY(-2px) scale(1)',
+const pillHover = {
+  ...pill,
+  background: '#f5f1eb',
+  borderColor: '#8b4513',
 };
 
 function ExampleQuestions({ onExampleClick }) {
-  const [hoveredIndex, setHoveredIndex] = React.useState(null);
-  const [activeIndex, setActiveIndex] = React.useState(null);
-
-  const getButtonStyle = (index) => {
-    if (activeIndex === index) return buttonActiveStyles;
-    if (hoveredIndex === index) return buttonHoverStyles;
-    return buttonBaseStyles;
-  };
-
+  const [over, setOver] = React.useState(null);
   return (
-    <div style={containerStyles}>
-      <h3 style={titleStyles}>Example Questions:</h3>
-      <div style={gridStyles}>
-        {EXAMPLE_QUESTIONS.map((example, index) => (
+    <div style={wrap}>
+      <div style={title}>Examples</div>
+      <div style={list}>
+        {EXAMPLES.map((ex, i) => (
           <button
-            key={index}
-            style={getButtonStyle(index)}
-            onClick={() => {
-              onExampleClick(example.text);
-              setActiveIndex(index);
-              setTimeout(() => setActiveIndex(null), 200);
-            }}
-            onMouseEnter={() => setHoveredIndex(index)}
-            onMouseLeave={() => setHoveredIndex(null)}
+            key={i}
+            type="button"
+            style={over === i ? pillHover : pill}
+            onClick={() => onExampleClick(ex.text)}
+            onMouseEnter={() => setOver(i)}
+            onMouseLeave={() => setOver(null)}
           >
-            {example.label}
+            {ex.label}
           </button>
         ))}
       </div>

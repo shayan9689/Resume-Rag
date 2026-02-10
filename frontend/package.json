@@ -1,7 +1,7 @@
 {
-  "name": "resume-rag-frontend",
+  "name": "arabic-docs-rag-frontend",
   "version": "1.0.0",
-  "description": "React frontend for Resume RAG System",
+  "description": "React frontend for Arabic Docs RAG",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",

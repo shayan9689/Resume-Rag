@@ -1,6 +1,8 @@
 """
 Retrieval-Augmented Generation (RAG) module.
-Focused on providing direct, precise answers.
+- Greetings: friendly + redirect to document topics
+- Query embedding/redirect: map vague queries to main context
+- Answers: 100% document match, attention to detail
 """
 
 import re
@@ -12,119 +14,117 @@ from backend.prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE, GREETING_PROMPT
 from backend.vector_store import VectorStore
 
 
-class ResumeRAG:
-    """RAG system for answering questions about resume with focused prompt engineering."""
-    
-    # Patterns to detect greetings
-    GREETING_PATTERNS = [
-        r'^\s*(hi|hello|hey|greetings|good morning|good afternoon|good evening)\s*[!?.]*\s*$',
-        r'\b(hi|hello|hey)\s+(there|you)\b',
+class ArabicRAG:
+    """RAG for Arabic document Q&A with greetings, query redirect, and strict doc matching."""
+
+    # English greeting patterns
+    GREETING_PATTERNS_EN = [
+        r"^\s*(hi|hello|hey|greetings|good morning|good afternoon|good evening|howdy)\s*[!?.]*\s*$",
+        r"^\s*(hi|hello|hey)\s+(there|you)\s*[!?.]*\s*$",
+        r"^\s*how\s+are\s+you\s*[!?.]*\s*$",
+        r"^\s*what'?s\s+up\s*[!?.]*\s*$",
     ]
-    
-    def __init__(self, vector_store: VectorStore, openai_api_key: str, model_name: str = "gpt-4o-mini", temperature: float = 0.1):
-        """
-        Initialize the ResumeRAG system.
-        
-        Args:
-            vector_store: Initialized VectorStore instance
-            openai_api_key: OpenAI API key for generation
-            model_name: OpenAI model for generation
-            temperature: Temperature for generation (lower = more focused)
-        """
+    # Arabic greeting patterns
+    GREETING_PATTERNS_AR = [
+        r"^\s*مرحبا\s*[!?.]*\s*$",
+        r"^\s*أهلا\s*[!?.]*\s*$",
+        r"^\s*السلام\s+عليكم\s*[!?.]*\s*$",
+        r"^\s*اهلين\s*[!?.]*\s*$",
+        r"^\s*هلا\s*[!?.]*\s*$",
+        r"^\s*كيف\s+حالك\s*[!?.]*\s*$",
+    ]
+
+    def __init__(
+        self,
+        vector_store: VectorStore,
+        openai_api_key: str,
+        model_name: str = "gpt-4o-mini",
+        temperature: float = 0.1,
+    ):
         self.vector_store = vector_store
         self.llm = ChatOpenAI(
             model=model_name,
-            temperature=temperature,  # Lower temperature for more focused answers
-            openai_api_key=openai_api_key
+            temperature=temperature,
+            openai_api_key=openai_api_key,
         )
-    
+
     def _is_greeting(self, query: str) -> bool:
-        """Check if the query is a greeting."""
-        query_lower = query.lower().strip()
-        
-        # Check for pure greetings (short messages)
-        if len(query_lower.split()) <= 4:
-            for pattern in self.GREETING_PATTERNS:
-                if re.search(pattern, query_lower, re.IGNORECASE):
-                    return True
-        
+        """Detect greetings in English or Arabic."""
+        q = query.strip()
+        if not q or len(q) > 120:
+            return False
+        # English
+        for p in self.GREETING_PATTERNS_EN:
+            if re.search(p, q, re.IGNORECASE):
+                return True
+        # Arabic
+        for p in self.GREETING_PATTERNS_AR:
+            if re.search(p, q):
+                return True
+        # Short generic (e.g. "hey" only)
+        if len(q.split()) <= 3 and re.search(r"^(hi|hello|hey|مرحبا|أهلا|هلا|اهلين)\s*[!?.]*$", q, re.IGNORECASE):
+            return True
         return False
-    
+
     def _handle_greeting(self, message: str) -> str:
-        """Handle greeting messages with a brief response."""
+        """Friendly greeting + redirect to document topics."""
         prompt = GREETING_PROMPT.format(message=message)
-        
         messages = [
-            SystemMessage(content="You are a concise resume assistant."),
-            HumanMessage(content=prompt)
+            SystemMessage(content="You are a friendly document assistant. Respond warmly then redirect to document topics in the user's language."),
+            HumanMessage(content=prompt),
         ]
-        
         response = self.llm.invoke(messages)
         return response.content.strip()
-    
+
     def ask(self, question: str, k: int = 4) -> str:
         """
-        Answer a question about the resume using focused RAG.
-        
-        Args:
-            question: User's question about the resume
-            k: Number of chunks to retrieve
-            
-        Returns:
-            Direct answer string based on resume content
+        Answer with greetings handled, query redirect when helpful, 100% doc match.
         """
-        # Normalize the question
         question = question.strip()
-        
-        # Handle greetings
+        if not question:
+            return "Please ask a question about the documents."
+
+        # 1. Greetings: friendly response + redirect to main topic
         if self._is_greeting(question):
             return self._handle_greeting(question)
-        
-        # Retrieve relevant chunks
+
+        # 2. Retrieve context
         relevant_chunks = self.vector_store.search(question, k=k)
-        
-        # If no relevant chunks found, try with more chunks
-        if not relevant_chunks or len(relevant_chunks) == 0:
-            relevant_chunks = self.vector_store.search(question, k=k*2)
-        
-        # Combine chunks into context
+        if not relevant_chunks:
+            relevant_chunks = self.vector_store.search(question, k=k * 2)
+
         context = "\n\n".join(relevant_chunks) if relevant_chunks else ""
-        
-        # If still no context, provide direct message
+
         if not context:
-            return "This information is not available in the resume."
-        
-        # Format user prompt
-        user_prompt = USER_PROMPT_TEMPLATE.format(
-            context=context,
-            question=question
-        )
-        
-        # Generate response
+            return (
+                "This information is not in the provided documents."
+                if not re.search(r"[\u0600-\u06FF]", question)
+                else "هذه المعلومة غير واردة في المستندات المعطاة."
+            )
+
+        # 3. Generate answer: prompt handles redirect to main topic + 100% doc match
+        user_prompt = USER_PROMPT_TEMPLATE.format(context=context, question=question)
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=user_prompt)
+            HumanMessage(content=user_prompt),
         ]
-        
         response = self.llm.invoke(messages)
-        
-        # Return cleaned, focused answer
         answer = response.content.strip()
-        
-        # Remove common filler phrases if they appear
-        filler_phrases = [
-            "Based on the resume,",
-            "According to the resume,",
-            "From the resume,",
-            "The resume shows that",
-            "The candidate has",
+
+        # Remove filler prefixes if present
+        filler_en = [
+            "Based on the documents,",
+            "According to the documents,",
+            "From the documents,",
+            "The documents state that",
+            "The documents show that",
         ]
-        
-        for phrase in filler_phrases:
+        filler_ar = ["وفقاً للمستندات،", "بناءً على الوثائق،", "من الوثائق،"]
+        for phrase in filler_en + filler_ar:
             if answer.startswith(phrase):
-                answer = answer[len(phrase):].strip()
-                # Capitalize first letter
+                answer = answer[len(phrase) :].strip()
                 if answer:
-                    answer = answer[0].upper() + answer[1:]
-        
+                    answer = answer[0].upper() + answer[1:] if answer[0].isalpha() else answer
+                break
+
         return answer

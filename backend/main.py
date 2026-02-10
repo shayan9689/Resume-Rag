@@ -1,9 +1,8 @@
 """
-FastAPI entry point for Resume RAG system.
-Provides REST API endpoint for querying resume information.
+FastAPI entry point for Arabic Docs RAG.
+REST API for Q&A over Arabic/English documents.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -20,9 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.config import (
-    RESUME_PATH,
+    DOCUMENT_PATHS,
     FAISS_INDEX_PATH,
-    FAISS_CHUNKS_PATH,
     OPENAI_API_KEY,
     EMBEDDING_MODEL,
     GENERATION_MODEL,
@@ -34,27 +32,19 @@ from backend.config import (
     API_VERSION,
     CORS_ORIGINS,
     API_HOST,
-    API_PORT
+    API_PORT,
 )
-from backend.loader import ResumeLoader
+from backend.loader import DocumentLoader
 from backend.vector_store import VectorStore
-from backend.rag import ResumeRAG
+from backend.rag import ArabicRAG
 
 # Global variables for RAG system
 vector_store: Optional[VectorStore] = None
-rag_system: Optional[ResumeRAG] = None
+rag_system: Optional[ArabicRAG] = None
+_init_error: Optional[str] = None  # Reason RAG failed to start (for /health and 503)
 
 
 def validate_openai_key() -> str:
-    """
-    Validate and retrieve OpenAI API key from configuration.
-    
-    Returns:
-        OpenAI API key string
-        
-    Raises:
-        ValueError: If API key is not found
-    """
     if not OPENAI_API_KEY or OPENAI_API_KEY == "your_openai_api_key_here":
         raise ValueError(
             "OPENAI_API_KEY not found in environment variables. "
@@ -63,84 +53,84 @@ def validate_openai_key() -> str:
     return OPENAI_API_KEY
 
 
+def documents_exist() -> bool:
+    """Check if at least one configured document exists."""
+    return any(p.exists() for p in DOCUMENT_PATHS)
+
+
 def initialize_rag_system():
     """Initialize the RAG system on startup."""
-    global vector_store, rag_system
-    
+    global vector_store, rag_system, _init_error
+    _init_error = None
+
     try:
-        # Validate API key
         api_key = validate_openai_key()
-        
-        # Initialize vector store
+
         vector_store = VectorStore(
             openai_api_key=api_key,
             index_path=str(FAISS_INDEX_PATH),
-            embedding_model=EMBEDDING_MODEL
+            embedding_model=EMBEDDING_MODEL,
         )
-        
-        # Try to load existing index
+
         index_loaded = vector_store.load_index()
-        
+
         if not index_loaded:
-            # Create new index from resume
-            print("Index not found. Creating new index from resume...")
-            
-            if not RESUME_PATH.exists():
-                print(f"WARNING: Resume file not found at {RESUME_PATH}")
-                print("Please place your resume PDF file in the backend/data/ directory.")
-                print("The server will start but /ask endpoint will not work until resume is added.")
+            print("Index not found. Creating new index from documents...")
+
+            if not documents_exist():
+                _init_error = "No document PDFs found in backend/data/. Add NDS_AR_0.pdf, QNDS3_AR.pdf, NDS2Final.pdf, QNV2030_Arabic_v2.pdf"
+                print("WARNING: No document PDFs found in backend/data/.")
+                print("Expected: NDS_AR_0.pdf, QNDS3_AR.pdf, NDS2Final.pdf, QNV2030_Arabic_v2.pdf")
+                print("Server will start but /ask will return 503 until documents are added.")
                 return
-            
-            loader = ResumeLoader(
-                resume_path=str(RESUME_PATH),
+
+            loader = DocumentLoader(
+                document_paths=DOCUMENT_PATHS,
                 chunk_size=CHUNK_SIZE,
-                chunk_overlap=CHUNK_OVERLAP
+                chunk_overlap=CHUNK_OVERLAP,
             )
-            chunks = loader.load_resume()
-            
+            chunks = loader.load_documents()
+            print(f"Loaded {len(chunks)} chunks from {len(DOCUMENT_PATHS)} documents.")
+
             vector_store.create_index(chunks)
             vector_store.save_index()
             print("Index created and saved successfully.")
         else:
             print("Loaded existing index from disk.")
-        
-        # Initialize RAG system
-        rag_system = ResumeRAG(
+
+        rag_system = ArabicRAG(
             vector_store=vector_store,
             openai_api_key=api_key,
             model_name=GENERATION_MODEL,
-            temperature=TEMPERATURE
+            temperature=TEMPERATURE,
         )
         print("RAG system initialized successfully.")
-        
+
     except ValueError as e:
-        # API key validation error
-        print(f"ERROR: {str(e)}")
-        print("Server will start but /ask endpoint will not work until API key is configured.")
+        _init_error = str(e)
+        print(f"ERROR: {_init_error}")
+        print("Server will start but /ask will return 503 until API key is set in backend/.env")
     except Exception as e:
-        print(f"WARNING: Failed to initialize RAG system: {str(e)}")
-        print("Server will start but /ask endpoint will not work until the issue is resolved.")
+        import traceback
+        _init_error = str(e)
+        print(f"WARNING: Failed to initialize RAG system: {_init_error}")
+        traceback.print_exc()
+        print("Server will start but /ask will return 503. Fix the error above and restart.")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager for FastAPI startup/shutdown events."""
-    # Startup
     initialize_rag_system()
     yield
-    # Shutdown (if needed in future)
-    pass
 
 
-# Initialize FastAPI app with lifespan
 app = FastAPI(
     title=API_TITLE,
-    description="Retrieval-Augmented Generation system for querying resume information",
+    description="Arabic Docs RAG — Q&A over Arabic/English documents",
     version=API_VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
-# Add CORS middleware to allow frontend requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -150,97 +140,75 @@ app.add_middleware(
 )
 
 
-# Request/Response models
 class QuestionRequest(BaseModel):
-    """Request model for /ask endpoint."""
     question: str
 
 
 class AnswerResponse(BaseModel):
-    """Response model for /ask endpoint."""
     answer: str
 
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information."""
     return {
         "message": API_TITLE,
         "version": API_VERSION,
         "endpoints": {
-            "/ask": "POST - Ask questions about the resume",
+            "/ask": "POST - Ask questions about the documents",
             "/health": "GET - Health check",
-            "/docs": "GET - Interactive API documentation (Swagger UI)"
-        }
+            "/docs": "GET - Interactive API documentation (Swagger UI)",
+        },
     }
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    resume_exists = RESUME_PATH.exists()
+    docs_exist = documents_exist()
     api_key_set = OPENAI_API_KEY and OPENAI_API_KEY != "your_openai_api_key_here"
-    
+
     if rag_system is None or vector_store is None:
         return {
             "status": "degraded",
             "message": "RAG system not initialized",
-            "resume_exists": resume_exists,
+            "init_error": _init_error,
+            "documents_available": docs_exist,
             "api_key_configured": api_key_set,
             "index_loaded": False,
-            "chunks_count": 0
+            "chunks_count": 0,
         }
-    
+
     return {
         "status": "healthy",
         "index_loaded": vector_store.index is not None,
-        "chunks_count": len(vector_store.chunks) if vector_store.chunks else 0
+        "chunks_count": len(vector_store.chunks) if vector_store.chunks else 0,
     }
 
 
 @app.post("/ask", response_model=AnswerResponse)
 async def ask_question(request: QuestionRequest):
-    """
-    Answer a question about the resume.
-    
-    Args:
-        request: QuestionRequest containing the question
-        
-    Returns:
-        AnswerResponse with the answer
-        
-    Raises:
-        HTTPException: If RAG system is not initialized or question is empty
-    """
     if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
+        detail = "RAG system not initialized. Check server logs and ensure backend/.env has OPENAI_API_KEY and documents exist in backend/data/."
+        if _init_error:
+            detail += f" Error: {_init_error}"
+        raise HTTPException(status_code=503, detail=detail)
+
     if not request.question or not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
-    
+
     try:
         answer = rag_system.ask(request.question, k=TOP_K_CHUNKS)
         return AnswerResponse(answer=answer)
-    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing question: {str(e)}")
 
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     print("=" * 60)
     print(f"Starting {API_TITLE} v{API_VERSION}")
-    print(f"Server will run on: http://{API_HOST}:{API_PORT}")
-    print(f"API Documentation: http://{API_HOST}:{API_PORT}/docs")
-    print(f"Frontend should connect to: http://localhost:{API_PORT}")
+    print(f"Server: http://{API_HOST}:{API_PORT}")
+    print(f"Docs: http://{API_HOST}:{API_PORT}/docs")
     print("=" * 60)
-    print()
-    
-    uvicorn.run(
-        app,
-        host=API_HOST,
-        port=API_PORT,
-        reload=False,
-        log_level="info"
-    )
+
+    uvicorn.run(app, host=API_HOST, port=API_PORT, reload=False, log_level="info")
