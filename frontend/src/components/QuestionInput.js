@@ -1,118 +1,151 @@
 import React from 'react';
 
-const wrap = {
-  marginBottom: '2rem',
-  animation: 'fadeUp 0.4s ease-out',
+const containerStyles = {
+  marginBottom: '2.5rem',
+  animation: 'fadeIn 0.6s ease-out',
 };
 
-const label = {
+const labelStyles = {
   display: 'block',
-  fontSize: '0.75rem',
-  fontWeight: '600',
-  color: '#6b5b4f',
-  marginBottom: '0.5rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
+  fontSize: '1.15rem',
+  fontWeight: '700',
+  color: '#ffffff',
+  marginBottom: '1rem',
+  textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
 };
 
-const textarea = {
+const textareaStyles = {
   width: '100%',
-  padding: '1rem 1.25rem',
+  padding: '1.25rem',
   fontSize: '1rem',
   fontFamily: 'inherit',
-  lineHeight: '1.5',
-  border: '1px solid #c4b8a8',
-  borderLeft: '4px solid #8b4513',
-  borderRadius: '0',
-  background: '#fff',
-  color: '#2d2520',
+  border: '2px solid rgba(255, 255, 255, 0.2)',
+  borderRadius: '16px',
+  background: 'rgba(255, 255, 255, 0.95)',
+  backdropFilter: 'blur(10px)',
+  color: '#1a202c',
   resize: 'vertical',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
   outline: 'none',
-  transition: 'border-color 0.2s',
 };
 
-const textareaFocus = {
-  ...textarea,
-  borderColor: '#8b4513',
+const textareaFocusStyles = {
+  ...textareaStyles,
+  border: '2px solid #667eea',
+  boxShadow: '0 8px 30px rgba(102, 126, 234, 0.4)',
+  transform: 'translateY(-2px)',
 };
 
-const textareaDisabled = {
-  ...textarea,
-  background: '#f5f1eb',
+const textareaDisabledStyles = {
+  ...textareaStyles,
+  background: 'rgba(255, 255, 255, 0.7)',
   cursor: 'not-allowed',
-  opacity: 0.8,
+  opacity: 0.7,
 };
 
-const btn = {
-  marginTop: '1rem',
-  padding: '0.75rem 1.5rem',
-  fontSize: '0.9rem',
-  fontWeight: '600',
-  color: '#fff',
-  background: '#8b4513',
+const buttonStyles = {
+  width: '100%',
+  marginTop: '1.25rem',
+  padding: '1rem 2rem',
+  fontSize: '1.05rem',
+  fontWeight: '700',
+  color: '#ffffff',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   border: 'none',
-  borderRadius: '0',
+  borderRadius: '12px',
   cursor: 'pointer',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  gap: '0.5rem',
+  gap: '0.75rem',
+  boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
 };
 
-const btnHover = { ...btn, background: '#6d3410' };
-const btnDisabled = { ...btn, background: '#a08060', cursor: 'not-allowed' };
+const buttonHoverStyles = {
+  ...buttonStyles,
+  transform: 'translateY(-3px)',
+  boxShadow: '0 10px 30px rgba(102, 126, 234, 0.5)',
+};
 
-const spinner = {
-  width: '14px',
-  height: '14px',
-  border: '2px solid rgba(255,255,255,0.3)',
-  borderTopColor: '#fff',
+const buttonDisabledStyles = {
+  ...buttonStyles,
+  background: 'rgba(156, 163, 175, 0.8)',
+  cursor: 'not-allowed',
+  transform: 'none',
+  boxShadow: 'none',
+};
+
+const spinnerStyles = {
+  width: '18px',
+  height: '18px',
+  border: '3px solid rgba(255, 255, 255, 0.3)',
+  borderTopColor: '#ffffff',
   borderRadius: '50%',
-  animation: 'spin 0.7s linear infinite',
+  animation: 'spin 0.8s linear infinite',
 };
 
-const hint = { marginTop: '0.5rem', fontSize: '0.75rem', color: '#8a7a6a' };
+const hintStyles = {
+  marginTop: '0.75rem',
+  fontSize: '0.875rem',
+  color: 'rgba(255, 255, 255, 0.8)',
+  textAlign: 'center',
+  fontStyle: 'italic',
+};
 
 function QuestionInput({ question, setQuestion, onAsk, loading, onKeyPress }) {
-  const [focus, setFocus] = React.useState(false);
-  const [hover, setHover] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false);
 
-  const taStyle = loading ? textareaDisabled : focus ? textareaFocus : textarea;
-  const btnStyle = loading || !question.trim() ? btnDisabled : hover ? btnHover : btn;
+  const getTextareaStyle = () => {
+    if (loading) return textareaDisabledStyles;
+    if (isFocused) return textareaFocusStyles;
+    return textareaStyles;
+  };
+
+  const getButtonStyle = () => {
+    if (loading || !question.trim()) return buttonDisabledStyles;
+    if (isHovered) return buttonHoverStyles;
+    return buttonStyles;
+  };
 
   return (
-    <div style={wrap}>
-      <label htmlFor="q" style={label}>Your question</label>
+    <div style={containerStyles}>
+      <label htmlFor="question-input" style={labelStyles}>
+        Ask a Question:
+      </label>
       <textarea
-        id="q"
-        style={taStyle}
-        placeholder="e.g. What are the main goals? / ما هي أبرز الأهداف؟"
+        id="question-input"
+        style={getTextareaStyle()}
+        placeholder="e.g., What are your key skills? What is your educational background?"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         onKeyPress={onKeyPress}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
-        rows={4}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        rows="4"
         disabled={loading}
       />
       <button
-        type="button"
-        style={btnStyle}
+        style={getButtonStyle()}
         onClick={onAsk}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         disabled={loading || !question.trim()}
       >
         {loading ? (
           <>
-            <span style={spinner} />
-            <span>Asking…</span>
+            <span style={spinnerStyles}></span>
+            <span>Processing...</span>
           </>
         ) : (
-          'Ask'
+          'Ask Question'
         )}
       </button>
-      <p style={hint}>Ctrl+Enter to send</p>
+      <p style={hintStyles}>💡 Press Ctrl+Enter to submit</p>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 """
-Arabic Docs RAG Backend Package
+Resume RAG Backend Package
 """
 
 __version__ = "1.0.0"

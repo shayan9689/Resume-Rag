@@ -13,7 +13,7 @@ from langchain_openai import OpenAIEmbeddings
 
 
 class VectorStore:
-    """Manages FAISS vector store for document embeddings."""
+    """Manages FAISS vector store for resume embeddings."""
     
     def __init__(self, openai_api_key: str, index_path: str = "faiss_index", embedding_model: str = "text-embedding-3-large"):
         """
